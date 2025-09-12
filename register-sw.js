@@ -14,6 +14,7 @@ if ('serviceWorker' in navigator) {
 let deferredPrompt;
 
 window.addEventListener('beforeinstallprompt', (e) => {
+  console.log('beforeinstallprompt event fired');
   // Prevent the mini-infobar from appearing on mobile
   e.preventDefault();
   // Stash the event so it can be triggered later
@@ -23,6 +24,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
 function showInstallPromotion() {
+  console.log('showInstallPromotion function called');
   // You can customize this to show your own install button
   const installButton = document.createElement('button');
   installButton.textContent = 'Install App';
