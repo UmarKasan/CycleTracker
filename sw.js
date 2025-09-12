@@ -1,17 +1,17 @@
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `cycle-tracker-${CACHE_VERSION}`;
 const OFFLINE_URL = 'offline.html';
 
 // Use relative paths so this works on GitHub Pages subpaths
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/app.js',
-  '/register-sw.js',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
+  './',
+  'index.html',
+  'style.css',
+  'app.js',
+  'register-sw.js',
+  'manifest.json',
+  'icon-192.png',
+  'icon-512.png',
   OFFLINE_URL
 ];
 
@@ -58,7 +58,10 @@ self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
-        .catch(() => caches.match('/index.html'))
+        .then((response) => {
+          return response;
+        })
+        .catch(() => caches.match('index.html'))
     );
     return;
   }
@@ -98,8 +101,8 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(() => {
         // If both cache and network fail, show offline page for HTML requests
-        if (event.request.headers.get('accept').includes('text/html')) {
-          return caches.match('/index.html');
+        if (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html')) {
+          return caches.match(OFFLINE_URL);
         }
       })
   );
