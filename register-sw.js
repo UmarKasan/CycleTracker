@@ -1,11 +1,11 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/CycleTracker/sw.js')
+    navigator.serviceWorker.register('./sw.js')
       .then(registration => {
-        console.log('ServiceWorker registration successful');
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
       })
-      .catch(err => {
-        console.log('ServiceWorker registration failed: ', err);
+      .catch(error => {
+        console.error('ServiceWorker registration failed: ', error);
       });
   });
 }
@@ -25,18 +25,42 @@ window.addEventListener('beforeinstallprompt', (e) => {
 function showInstallPromotion() {
   const installButton = document.createElement('button');
   installButton.textContent = 'Install App';
-  installButton.className = 'install-button';
+  installButton.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1000;
+  `;
 
   installButton.addEventListener('click', async () => {
-    installButton.style.display = 'none';
-    if (deferredPrompt) {
+    if (!deferredPrompt) return;
+    
+    installButton.disabled = true;
+    installButton.textContent = 'Installing...';
+    
+    try {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       console.log(`User response to the install prompt: ${outcome}`);
+      
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+    } catch (error) {
+      console.error('Error during installation:', error);
+    } finally {
+      installButton.style.display = 'none';
       deferredPrompt = null;
     }
   });
 
   document.body.appendChild(installButton);
-  installButton.style.display = 'block'; // Show the button
 }

@@ -1,12 +1,14 @@
 const CACHE_NAME = 'cycle-tracker-cache-v1';
+
 const urlsToCache = [
-  '/CycleTracker/',
-  '/CycleTracker/index.html',
-  '/CycleTracker/style.css',
-  '/CycleTracker/app.js',
-  '/CycleTracker/manifest.json',
-  '/CycleTracker/icon-192.png',
-  '/CycleTracker/icon-512.png'
+  './',
+  './index.html',
+  './style.css',
+  './app.js',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './register-sw.js'
 ];
 
 self.addEventListener('install', event => {
@@ -16,6 +18,9 @@ self.addEventListener('install', event => {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
+      .catch(error => {
+        console.error('Failed to cache:', error);
+      })
   );
 });
 
@@ -23,10 +28,34 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
+        // Cache hit - return response
         if (response) {
           return response;
         }
-        return fetch(event.request);
+        
+        // Clone the request
+        const fetchRequest = event.request.clone();
+        
+        return fetch(fetchRequest).then(
+          response => {
+            // Check if we received a valid response
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            // Clone the response
+            const responseToCache = response.clone();
+
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          }
+        ).catch(error => {
+          console.error('Fetch failed:', error);
+        });
       })
   );
 });
