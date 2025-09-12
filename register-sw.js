@@ -1,16 +1,18 @@
-// Service Worker Registration
+// Service Worker Registration (register as early as possible)
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then(registration => {
-        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+  navigator.serviceWorker.register('./sw.js')
+    .then(registration => {
+      console.log('ServiceWorker registration successful with scope:', registration.scope);
+      // Ensure the SW is active/ready asap for installability checks
+      navigator.serviceWorker.ready.then(() => {
+        console.log('ServiceWorker is ready');
         // Check if the app is already installed
         checkIfAppIsInstalled();
-      })
-      .catch(err => {
-        console.error('ServiceWorker registration failed: ', err);
       });
-  });
+    })
+    .catch(err => {
+      console.error('ServiceWorker registration failed:', err);
+    });
 }
 
 // PWA Install Button Handling
