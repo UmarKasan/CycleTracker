@@ -1,6 +1,7 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    // Use a relative path so it works on GitHub Pages subpaths
+    navigator.serviceWorker.register('sw.js')
       .then(registration => {
         console.log('ServiceWorker registration successful');
       })
