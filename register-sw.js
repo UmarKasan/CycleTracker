@@ -1,6 +1,6 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('/CycleTracker/sw.js')
       .then(registration => {
         console.log('ServiceWorker registration successful');
       })
@@ -23,30 +23,20 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
 function showInstallPromotion() {
-  // You can customize this to show your own install button
   const installButton = document.createElement('button');
   installButton.textContent = 'Install App';
-  installButton.style.position = 'fixed';
-  installButton.style.bottom = '20px';
-  installButton.style.right = '20px';
-  installButton.style.padding = '10px 20px';
-  installButton.style.backgroundColor = '#ff6b6b';
-  installButton.style.color = 'white';
-  installButton.style.border = 'none';
-  installButton.style.borderRadius = '5px';
-  installButton.style.cursor = 'pointer';
-  
+  installButton.className = 'install-button';
+
   installButton.addEventListener('click', async () => {
-    // Hide the install button
     installButton.style.display = 'none';
-    // Show the install prompt
-    deferredPrompt.prompt();
-    // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
-    // Clear the saved prompt
-    deferredPrompt = null;
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
+      deferredPrompt = null;
+    }
   });
-  
+
   document.body.appendChild(installButton);
+  installButton.style.display = 'block'; // Show the button
 }

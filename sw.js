@@ -1,11 +1,12 @@
 const CACHE_NAME = 'cycle-tracker-cache-v1';
 const urlsToCache = [
-  './',
-  './index.html',
-  './style.css',
-  './app.js',
-  './icon-192.png',
-  './icon-512.png'
+  '/CycleTracker/',
+  '/CycleTracker/index.html',
+  '/CycleTracker/style.css',
+  '/CycleTracker/app.js',
+  '/CycleTracker/manifest.json',
+  '/CycleTracker/icon-192.png',
+  '/CycleTracker/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
