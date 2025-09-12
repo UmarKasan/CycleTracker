@@ -1,53 +1,57 @@
+// Service Worker Registration
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Use a relative path so it works on GitHub Pages subpaths
     navigator.serviceWorker.register('sw.js')
       .then(registration => {
-        console.log('ServiceWorker registration successful');
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
       })
       .catch(err => {
-        console.log('ServiceWorker registration failed: ', err);
+        console.error('ServiceWorker registration failed: ', err);
       });
   });
 }
 
-// Handle the beforeinstallprompt event
+// PWA Install Button Handling
 let deferredPrompt;
+const installButton = document.getElementById('installButton');
 
+// Only show the install button if the app isn't already installed
 window.addEventListener('beforeinstallprompt', (e) => {
-  // Prevent the mini-infobar from appearing on mobile
+  // Prevent Chrome 67 and earlier from automatically showing the prompt
   e.preventDefault();
   // Stash the event so it can be triggered later
   deferredPrompt = e;
-  // Show the install button or your custom UI
-  showInstallPromotion();
+  // Show the install button
+  installButton.style.display = 'block';
+  
+  // Log that the PWA can be installed
+  console.log('PWA installation available');
 });
 
-function showInstallPromotion() {
-  // You can customize this to show your own install button
-  const installButton = document.createElement('button');
-  installButton.textContent = 'Install App';
-  installButton.style.position = 'fixed';
-  installButton.style.bottom = '20px';
-  installButton.style.right = '20px';
-  installButton.style.padding = '10px 20px';
-  installButton.style.backgroundColor = '#ff6b6b';
-  installButton.style.color = 'white';
-  installButton.style.border = 'none';
-  installButton.style.borderRadius = '5px';
-  installButton.style.cursor = 'pointer';
+// Handle install button click
+installButton.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
   
-  installButton.addEventListener('click', async () => {
-    // Hide the install button
-    installButton.style.display = 'none';
-    // Show the install prompt
-    deferredPrompt.prompt();
-    // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
-    // Clear the saved prompt
-    deferredPrompt = null;
-  });
+  // Show the install prompt
+  deferredPrompt.prompt();
   
-  document.body.appendChild(installButton);
-}
+  // Wait for the user to respond to the prompt
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log(`User response to the install prompt: ${outcome}`);
+  
+  // Clear the deferredPrompt variable
+  deferredPrompt = null;
+  
+  // Hide the install button after installation
+  installButton.style.display = 'none';
+});
+
+// Hide the install button if the app is already installed
+window.addEventListener('appinstalled', () => {
+  console.log('PWA was installed');
+  installButton.style.display = 'none';
+  deferredPrompt = null;
+});
+
+// Hide install button by default
+installButton.style.display = 'none';
