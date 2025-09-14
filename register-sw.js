@@ -1,5 +1,5 @@
 var Version;
-Version = 2.30;
+Version = 2.32;
 
 // Detect the platform
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -197,9 +197,12 @@ function addButtonToBody() {
     });
   }
   
-  // Hide the button if already installed
-  if (isStandalone) {
+  // Show the button in both desktop and standalone views
+  // Only hide if the app is already installed in standalone mode
+  if (isStandalone && window.matchMedia('(display-mode: standalone)').matches) {
     btnAddToHomeScreen.style.display = 'none';
+  } else {
+    btnAddToHomeScreen.style.display = 'block';
   }
 }
 
@@ -282,9 +285,13 @@ function showInstallPromotion() {
   console.log('showInstallPromotion called');
   
   // Show the button and set initial state
-  btnAddToHomeScreen.style.display = 'block';
+  if (isStandalone && window.matchMedia('(display-mode: standalone)').matches) {
+    btnAddToHomeScreen.style.display = 'none';
+  } else {
+    btnAddToHomeScreen.style.display = 'block';
+  }
   btnAddToHomeScreen.disabled = false;
-  btnAddToHomeScreen.textContent = 'Install App';
+  btnAddToHomeScreen.textContent = isIOS ? 'Add to Home Screen' : 'Install App';
   
   console.log('Button display set to:', window.getComputedStyle(btnAddToHomeScreen).display);
   
