@@ -21,21 +21,25 @@ if (!btnAddToHomeScreen) {
   // Style the button
   btnAddToHomeScreen.style.cssText = `
     position: fixed !important;
-    bottom: 20px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    padding: 12px 24px !important;
+    bottom: 30px !important;
+    left: 20px !important;
+    right: 20px !important;
+    width: auto !important;
+    max-width: 300px !important;
+    margin: 0 auto !important;
+    padding: 15px 24px !important;
     background-color: #4CAF50 !important;
     color: white !important;
     border: none !important;
-    border-radius: 25px !important;
+    border-radius: 30px !important;
     cursor: pointer !important;
     z-index: 9999 !important;
-    display: none !important;
+    display: block !important; /* Changed from none to block */
     font-size: 16px !important;
-    font-weight: 500 !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
     transition: all 0.3s ease !important;
+    text-align: center !important;
   `;
   
   // Add hover effect for non-touch devices
