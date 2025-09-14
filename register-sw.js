@@ -1,5 +1,5 @@
 var Version;
-Version = 2.32;
+Version = 2.33;
 
 // Detect the platform
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -216,17 +216,8 @@ if (document.readyState === 'loading') {
 
 console.log('Button created with ID:', btnAddToHomeScreen.id);
 
-// Handle the beforeinstallprompt event
-if (typeof deferredPrompt === 'undefined') {
-  var deferredPrompt;
-}
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  console.log('beforeinstallprompt event fired');
-  e.preventDefault();
-  deferredPrompt = e;
-  showInstallPromotion();
-});
+// Global variable to store the deferred prompt
+let deferredPrompt = null;
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
@@ -247,89 +238,97 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Single event listener for beforeinstallprompt
 window.addEventListener('beforeinstallprompt', (e) => {
-  console.log('beforeinstallprompt event fired', e);
+  console.log('beforeinstallprompt event fired');
   
-  // Prevent the default browser install prompt
+  // Prevent the mini-infobar from appearing on mobile
   e.preventDefault();
   
-  // Stash the event for later use
+  // Stash the event so it can be triggered later
   deferredPrompt = e;
-  console.log('deferredPrompt set:', !!deferredPrompt);
-  
-  // Log button state before showing
-  const buttonState = {
-    display: window.getComputedStyle(btnAddToHomeScreen).display,
-    visibility: window.getComputedStyle(btnAddToHomeScreen).visibility,
-    exists: document.body.contains(btnAddToHomeScreen),
-    disabled: btnAddToHomeScreen.disabled
-  };
-  console.log('Button state before showInstallPromotion:', buttonState);
+  console.log('Deferred prompt available');
   
   // Show the install button
   showInstallPromotion();
-  
-  // Log button state after showing
-  const newButtonState = {
-    display: window.getComputedStyle(btnAddToHomeScreen).display,
-    visibility: window.getComputedStyle(btnAddToHomeScreen).visibility,
-    disabled: btnAddToHomeScreen.disabled
-  };
-  console.log('Button state after showInstallPromotion:', newButtonState);
-  
-  // Log if the button is in the DOM
-  console.log('Button in DOM:', document.body.contains(btnAddToHomeScreen));
+});
+
+// Add event listener for appinstalled event
+window.addEventListener('appinstalled', (e) => {
+  console.log('App was installed');
+  // Hide the install button since the app is now installed
+  if (btnAddToHomeScreen) {
+    btnAddToHomeScreen.style.display = 'none';
+  }
+  // Clear the deferredPrompt so it can be garbage collected
+  deferredPrompt = null;
 });
 
 function showInstallPromotion() {
   console.log('showInstallPromotion called');
   
-  // Show the button and set initial state
-  if (isStandalone && window.matchMedia('(display-mode: standalone)').matches) {
-    btnAddToHomeScreen.style.display = 'none';
-  } else {
-    btnAddToHomeScreen.style.display = 'block';
-  }
-  btnAddToHomeScreen.disabled = false;
-  btnAddToHomeScreen.textContent = isIOS ? 'Add to Home Screen' : 'Install App';
-  
-  console.log('Button display set to:', window.getComputedStyle(btnAddToHomeScreen).display);
-  
-  // Set the click handler
-  btnAddToHomeScreen.onclick = async (e) => {
-    e.preventDefault();
-    console.log('Install button clicked, deferredPrompt:', !!deferredPrompt);
-    
-    if (!deferredPrompt) {
-      console.log('No deferredPrompt available');
-      return;
-    }
-    
-    // Update button state
-    btnAddToHomeScreen.disabled = true;
-    btnAddToHomeScreen.textContent = 'Installing...';
-    
-    try {
-      // Show the install prompt
-      deferredPrompt.prompt();
-      
-      // Wait for the user to respond to the prompt
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User response to the install prompt: ${outcome}`);
-      
-      if (outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      } else {
-        console.log('User dismissed the install prompt');
-      }
-    } catch (error) {
-      console.error('Error during installation:', error);
-    } finally {
-      // Clear the deferredPrompt variable
-      deferredPrompt = null;
-      
-      // Hide the button
+  // Don't show the button if the app is already installed
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    console.log('App is already installed, hiding install button');
+    if (btnAddToHomeScreen) {
       btnAddToHomeScreen.style.display = 'none';
     }
-  };
+    return;
+  }
+  
+  // Show the button and set initial state
+  if (btnAddToHomeScreen) {
+    btnAddToHomeScreen.style.display = 'block';
+    btnAddToHomeScreen.disabled = false;
+    btnAddToHomeScreen.textContent = isIOS ? 'Add to Home Screen' : 'Install App';
+    
+    console.log('Button display set to:', window.getComputedStyle(btnAddToHomeScreen).display);
+    
+    // Set the click handler
+    btnAddToHomeScreen.onclick = async (e) => {
+      e.preventDefault();
+      console.log('Install button clicked');
+      
+      if (!deferredPrompt) {
+        console.log('No deferredPrompt available');
+        return;
+      }
+      
+      console.log('Showing install prompt...');
+      
+      // Show the install prompt
+      try {
+        // Update button state
+        btnAddToHomeScreen.disabled = true;
+        btnAddToHomeScreen.textContent = 'Installing...';
+        
+        // Show the install prompt
+        deferredPrompt.prompt();
+        
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        
+        if (outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+          // The button will be hidden by the appinstalled event handler
+        } else {
+          console.log('User dismissed the install prompt');
+          // Reset the button state if the user dismisses the prompt
+          btnAddToHomeScreen.disabled = false;
+          btnAddToHomeScreen.textContent = isIOS ? 'Add to Home Screen' : 'Install App';
+        }
+      } catch (error) {
+        console.error('Error during installation:', error);
+        // Reset the button state on error
+        if (btnAddToHomeScreen) {
+          btnAddToHomeScreen.disabled = false;
+          btnAddToHomeScreen.textContent = isIOS ? 'Add to Home Screen' : 'Install App';
+        }
+      }
+      
+      // Clear the deferredPrompt variable
+      deferredPrompt = null;
+    };
+  }
 }
