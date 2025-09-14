@@ -1,37 +1,81 @@
 // Create the install button in the global scope
 console.log('Creating install button...');
-const btnAddToHomeScreen = document.createElement('button');
-btnAddToHomeScreen.id = 'installButton';
-btnAddToHomeScreen.textContent = 'Install App';
-btnAddToHomeScreen.style.cssText = `
-  position: fixed !important;
-  bottom: 20px !important;
-  right: 20px !important;
-  padding: 10px 20px !important;
-  background-color: #4CAF50 !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 5px !important;
-  cursor: pointer !important;
-  z-index: 1000 !important;
-  display: none !important;
-`;
+let btnAddToHomeScreen = document.getElementById('installButton');
 
-// Add the button to the body
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    document.body.appendChild(btnAddToHomeScreen);
-    console.log('Button added to body after DOM loaded');
-  });
+if (!btnAddToHomeScreen) {
+  console.log('Creating new install button...');
+  btnAddToHomeScreen = document.createElement('button');
+  btnAddToHomeScreen.id = 'installButton';
+  btnAddToHomeScreen.textContent = 'Install App';
+  btnAddToHomeScreen.style.cssText = `
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    padding: 10px 20px !important;
+    background-color: #ff0000 !important; /* Red color for better visibility */
+    color: white !important;
+    border: 2px solid white !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+    z-index: 9999 !important; /* Very high z-index */
+    display: none !important;
+    font-size: 16px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3) !important;
+  `;
+  
+  // Add a test click handler for debugging
+  btnAddToHomeScreen.onclick = function() {
+    console.log('Install button clicked!');
+    alert('Install button clicked!');
+  };
 } else {
-  document.body.appendChild(btnAddToHomeScreen);
-  console.log('Button added to body (DOM already loaded)');
+  console.log('Using existing install button');
+}
+
+// Add the install button to the body
+function addButtonToBody() {
+  if (document.body && !document.getElementById('installButton')) {
+    document.body.appendChild(btnAddToHomeScreen);
+    console.log('Button added to body');
+    
+    // Add a manual trigger button for testing
+    const testBtn = document.createElement('button');
+    testBtn.id = 'testInstallBtn';
+    testBtn.textContent = 'Test Install';
+    testBtn.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 9999;
+    `;
+    testBtn.onclick = () => {
+      console.log('Manual install trigger clicked');
+      showInstallPromotion();
+    };
+    document.body.appendChild(testBtn);
+  }
+}
+
+// Try to add the button immediately
+addButtonToBody();
+
+// Also try when DOM is loaded if not already
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', addButtonToBody);
 }
 
 console.log('Button created with ID:', btnAddToHomeScreen.id);
 
 // Handle the beforeinstallprompt event
-let deferredPrompt;
+if (typeof deferredPrompt === 'undefined') {
+  var deferredPrompt;
+}
 
 window.addEventListener('beforeinstallprompt', (e) => {
   console.log('beforeinstallprompt event fired');
