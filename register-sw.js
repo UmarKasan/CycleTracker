@@ -1,5 +1,5 @@
 var Version;
-Version = 2.28;
+Version = 2.29;
 
 // Create the install button in the global scope
 console.log('Creating install button...');
@@ -26,11 +26,7 @@ if (!btnAddToHomeScreen) {
     box-shadow: 0 2px 5px rgba(0,0,0,0.3) !important;
   `;
   
-  // Add a test click handler for debugging
-  btnAddToHomeScreen.onclick = function() {
-    console.log('Install button clicked!');
-    alert('Install button clicked!');
-  };
+  // Install button click handler will be set in showInstallPromotion
 } else {
   console.log('Using existing install button');
 }
@@ -38,10 +34,11 @@ if (!btnAddToHomeScreen) {
 // Add the install button to the body
 function addButtonToBody() {
   if (document.body && !document.getElementById('installButton')) {
+    // Add the install button
     document.body.appendChild(btnAddToHomeScreen);
-    console.log('Button added to body');
+    console.log('Install button added to body');
     
-    // Add a manual trigger button for testing
+    // Add a manual test button
     const testBtn = document.createElement('button');
     testBtn.id = 'testInstallBtn';
     testBtn.textContent = 'Test Install';
@@ -56,11 +53,28 @@ function addButtonToBody() {
       border-radius: 5px;
       cursor: pointer;
       z-index: 9999;
+      font-size: 14px;
     `;
+    
+    // Add test button click handler
     testBtn.onclick = () => {
-      console.log('Manual install trigger clicked');
-      showInstallPromotion();
+      console.log('Test install button clicked');
+      if (deferredPrompt) {
+        console.log('Showing install prompt from test button');
+        deferredPrompt.prompt().then(choiceResult => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+          } else {
+            console.log('User dismissed the install prompt');
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        console.log('No deferredPrompt available. Showing install button instead.');
+        btnAddToHomeScreen.style.display = 'block';
+      }
     };
+    
     document.body.appendChild(testBtn);
   }
 }
@@ -107,40 +121,68 @@ if ('serviceWorker' in navigator) {
 }
 
 window.addEventListener('beforeinstallprompt', (e) => {
-  console.log('beforeinstallprompt event fired');
-  // Prevent the mini-infobar from appearing on mobile
+  console.log('beforeinstallprompt event fired', e);
+  
+  // Prevent the default browser install prompt
   e.preventDefault();
-  // Stash the event so it can be triggered later
+  
+  // Stash the event for later use
   deferredPrompt = e;
-  console.log('Button state before showInstallPromotion:', {
+  console.log('deferredPrompt set:', !!deferredPrompt);
+  
+  // Log button state before showing
+  const buttonState = {
     display: window.getComputedStyle(btnAddToHomeScreen).display,
     visibility: window.getComputedStyle(btnAddToHomeScreen).visibility,
-    exists: document.body.contains(btnAddToHomeScreen)
-  });
+    exists: document.body.contains(btnAddToHomeScreen),
+    disabled: btnAddToHomeScreen.disabled
+  };
+  console.log('Button state before showInstallPromotion:', buttonState);
+  
   // Show the install button
   showInstallPromotion();
-  console.log('Button state after showInstallPromotion:', {
+  
+  // Log button state after showing
+  const newButtonState = {
     display: window.getComputedStyle(btnAddToHomeScreen).display,
-    visibility: window.getComputedStyle(btnAddToHomeScreen).visibility
-  });
+    visibility: window.getComputedStyle(btnAddToHomeScreen).visibility,
+    disabled: btnAddToHomeScreen.disabled
+  };
+  console.log('Button state after showInstallPromotion:', newButtonState);
+  
+  // Log if the button is in the DOM
+  console.log('Button in DOM:', document.body.contains(btnAddToHomeScreen));
 });
 
 function showInstallPromotion() {
   console.log('showInstallPromotion called');
-  // Show the button
+  
+  // Show the button and set initial state
   btnAddToHomeScreen.style.display = 'block';
+  btnAddToHomeScreen.disabled = false;
+  btnAddToHomeScreen.textContent = 'Install App';
+  
   console.log('Button display set to:', window.getComputedStyle(btnAddToHomeScreen).display);
   
-  // Add click event listener
-  btnAddToHomeScreen.onclick = async () => {
-    if (!deferredPrompt) return;
+  // Set the click handler
+  btnAddToHomeScreen.onclick = async (e) => {
+    e.preventDefault();
+    console.log('Install button clicked, deferredPrompt:', !!deferredPrompt);
     
+    if (!deferredPrompt) {
+      console.log('No deferredPrompt available');
+      return;
+    }
+    
+    // Update button state
     btnAddToHomeScreen.disabled = true;
     btnAddToHomeScreen.textContent = 'Installing...';
     
     try {
       // Show the install prompt
       deferredPrompt.prompt();
+      
+      // Wait for the user to respond to the prompt
       const { outcome } = await deferredPrompt.userChoice;
       console.log(`User response to the install prompt: ${outcome}`);
       
@@ -152,9 +194,11 @@ function showInstallPromotion() {
     } catch (error) {
       console.error('Error during installation:', error);
     } finally {
-      // Hide the button after installation attempt
-      btnAddToHomeScreen.style.display = 'none';
+      // Clear the deferredPrompt variable
       deferredPrompt = null;
+      
+      // Hide the button
+      btnAddToHomeScreen.style.display = 'none';
     }
   };
 }
