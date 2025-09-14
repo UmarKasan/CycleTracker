@@ -1,5 +1,5 @@
 var Version;
-Version = 2.33;
+Version = 2.34;
 
 // Detect the platform
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -18,12 +18,12 @@ if (!btnAddToHomeScreen) {
   const buttonText = isIOS ? 'Add to Home Screen' : 'Install App';
   btnAddToHomeScreen.textContent = buttonText;
   
-  // Style the button
+  // Style the button with no hover effects
   btnAddToHomeScreen.style.cssText = `
     position: fixed !important;
     bottom: 30px !important;
-    left: 20px !important;
-    right: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
     width: auto !important;
     max-width: 300px !important;
     margin: 0 auto !important;
@@ -34,37 +34,12 @@ if (!btnAddToHomeScreen) {
     border-radius: 30px !important;
     cursor: pointer !important;
     z-index: 9999 !important;
-    display: block !important; /* Changed from none to block */
+    display: block !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
-    transition: all 0.3s ease !important;
     text-align: center !important;
   `;
-  
-  // Add hover effect for non-touch devices
-  btnAddToHomeScreen.addEventListener('mouseenter', () => {
-    if (!('ontouchstart' in window)) {
-      btnAddToHomeScreen.style.transform = 'translateX(-50%) scale(1.05)';
-      btnAddToHomeScreen.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
-    }
-  });
-  
-  btnAddToHomeScreen.addEventListener('mouseleave', () => {
-    if (!('ontouchstart' in window)) {
-      btnAddToHomeScreen.style.transform = 'translateX(-50%)';
-      btnAddToHomeScreen.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-    }
-  });
-  
-  // Add active/press effect
-  btnAddToHomeScreen.addEventListener('mousedown', () => {
-    btnAddToHomeScreen.style.transform = 'translateX(-50%) scale(0.98)';
-  });
-  
-  btnAddToHomeScreen.addEventListener('mouseup', () => {
-    btnAddToHomeScreen.style.transform = 'translateX(-50%)';
-  });
   
   // Prevent text selection on double click
   btnAddToHomeScreen.addEventListener('selectstart', (e) => {
@@ -79,8 +54,14 @@ if (!btnAddToHomeScreen) {
 
 // Add the install button to the body and handle installation
 function addButtonToBody() {
-  if (!document.body || document.getElementById('installButton')) {
-    return; // Already added or no body element
+  if (!document.body) {
+    console.log('Document body not ready yet');
+    return;
+  }
+  
+  if (document.getElementById('installButton')) {
+    console.log('Install button already exists');
+    return;
   }
 
   // Add the install button to the body
@@ -239,18 +220,32 @@ if ('serviceWorker' in navigator) {
 }
 
 // Single event listener for beforeinstallprompt
+let installPromptEvent;
+
 window.addEventListener('beforeinstallprompt', (e) => {
   console.log('beforeinstallprompt event fired');
   
-  // Prevent the mini-infobar from appearing on mobile
+  // Prevent Chrome 67 and earlier from automatically showing the prompt
   e.preventDefault();
   
   // Stash the event so it can be triggered later
+  installPromptEvent = e;
   deferredPrompt = e;
   console.log('Deferred prompt available');
   
   // Show the install button
   showInstallPromotion();
+  
+  // For debugging
+  console.log('PWA installation available');
+  
+  // Optional: Show the install button after a delay if not shown
+  setTimeout(() => {
+    if (btnAddToHomeScreen && btnAddToHomeScreen.style.display !== 'block') {
+      console.log('Forcing show install button after delay');
+      showInstallPromotion();
+    }
+  }, 3000);
 });
 
 // Add event listener for appinstalled event
