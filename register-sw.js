@@ -1,3 +1,6 @@
+var Version;
+Version = 2.28;
+
 // Create the install button in the global scope
 console.log('Creating install button...');
 let btnAddToHomeScreen = document.getElementById('installButton');
